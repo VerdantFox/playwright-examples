@@ -1,6 +1,6 @@
-"""Tests against the website verdantfox.com"""
+"""Tests against the webpage https://verdantfox.com/games/connect-4"""
 import re
-from typing import Any
+from typing import Callable
 
 from playwright.sync_api import Locator, Page, expect
 
@@ -24,7 +24,22 @@ def assert_red_wld(page: Page, wins: int, losses: int, draws: int) -> None:
         expect(page.locator(f"#red-{wld}")).to_have_text(str(count))
 
 
-def test_single_move(page: Page, assert_snapshot: Any) -> None:
+def test_single_move_no_helpers(page: Page, assert_snapshot: Callable) -> None:
+    """Test that a single move by human, followed by AI behaves as expected"""
+    page.goto("https://verdantfox.com/games/connect-4")
+    page.locator("#circle-3-5").click()
+    expect(page.locator("#circle-3-5")).to_have_class(re.compile(r"color-red"))
+    expect(page.locator("#circle-3-5")).to_have_css(
+        "background-color", "rgb(255, 0, 0)"
+    )
+    expect(page.locator("#circle-3-4")).to_have_class(re.compile(r"color-blue"))
+    expect(page.locator("#circle-3-4")).to_have_css(
+        "background-color", "rgb(0, 0, 255)"
+    )
+    assert_snapshot(page.locator("#board").screenshot())
+
+
+def test_single_move_with_helpers(page: Page, assert_snapshot: Callable) -> None:
     """Test that a single move by human, followed by AI behaves as expected"""
     page.goto(GAME_PAGE)
     click_circle(page=page, col=3, row=2)
@@ -43,7 +58,7 @@ def test_single_move(page: Page, assert_snapshot: Any) -> None:
     assert_snapshot(page.locator("#board").screenshot())
 
 
-def test_full_game(page: Page, assert_snapshot: Any) -> None:
+def test_full_game(page: Page, assert_snapshot: Callable) -> None:
     """Test that a full game and reset between 2 human players behaves as expected"""
     page.goto(GAME_PAGE)
     # Turn AI for blue off
